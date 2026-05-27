@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="default">
+<meta name="theme-color" content="#fdf6ec">
+<title>Family Summer Bingo</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Baloo+2:wght@500;600;700;800&display=swap');
+
+  :root { --bg: #fdf6ec; }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+  html, body { overscroll-behavior: none; }
+
+  body {
+    font-family: 'Baloo 2', sans-serif;
+    background: var(--bg);
+    min-height: 100vh;
+    padding: 20px 12px calc(40px + env(safe-area-inset-bottom));
+    color: #3a3226;
+  }
+
+  header { text-align: center; margin-bottom: 10px; }
+  header h1 {
+    font-weight: 800;
+    font-size: clamp(1.7rem, 7vw, 2.6rem);
+    color: #c2410c;
+    line-height: 1.05;
+  }
+  header p {
+    font-size: 0.85rem;
+    font-weight: 500;
+    color: #8a7a5e;
+    margin-top: 2px;
+  }
+
+  /* Tabs — full width, equal, easy to tap */
+  .tabs {
+    display: flex;
+    gap: 8px;
+    max-width: 600px;
+    margin: 16px auto 18px;
+  }
+  .tab {
+    flex: 1;
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 700;
+    font-size: clamp(0.85rem, 3.6vw, 1.05rem);
+    padding: 14px 4px;
+    border-radius: 16px;
+    border: 3px solid;
+    cursor: pointer;
+    background: #fff;
+    transition: transform 0.12s ease;
+  }
+  .tab:active { transform: scale(0.96); }
+  .tab[data-player="benjamin"] { border-color: #1a2a5e; color: #1a2a5e; }
+  .tab[data-player="beckett"]  { border-color: #d4a017; color: #1e3a8a; }
+  .tab[data-player="katie"]    { border-color: #0d9488; color: #db2777; }
+  .tab.active[data-player="benjamin"] { background: #1a2a5e; color: #ffc72c; border-color: #1a2a5e; }
+  .tab.active[data-player="beckett"]  { background: #1e3a8a; color: #fff; border-color: #d4a017; }
+  .tab.active[data-player="katie"]    { background: #db2777; color: #fff; border-color: #0d9488; }
+
+  .card { display: none; max-width: 600px; margin: 0 auto;
+    border: 3px solid #111; border-radius: 16px;
+    padding: 16px 14px calc(18px + env(safe-area-inset-bottom)); }
+  .card.active { display: block; }
+
+  .card-head { text-align: center; margin-bottom: 12px; }
+  .card-head h2 { font-weight: 800; font-size: clamp(1.5rem, 6vw, 2.2rem); line-height: 1.1; }
+  .card[data-player="benjamin"] .card-head h2 { color: #1a2a5e; }
+  .card[data-player="beckett"]  .card-head h2 { color: #1e3a8a; }
+  .card[data-player="katie"]    .card-head h2 { color: #db2777; }
+  .progress { font-size: 0.9rem; font-weight: 600; color: #8a7a5e; margin-top: 1px; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+  }
+
+  .sq {
+    aspect-ratio: 1 / 1;
+    border-radius: 12px;
+    border: 3px solid;
+    background: #fff;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 4px 3px;
+    font-weight: 600;
+    font-size: clamp(0.5rem, 1.95vw, 0.8rem);
+    line-height: 1.12;
+    color: #3a3226;
+    transition: transform 0.1s ease, background 0.18s ease, color 0.18s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    position: relative;
+    overflow: hidden;
+  }
+  .sq:active { transform: scale(0.93); }
+
+  .card[data-player="benjamin"] .sq { border-color: #1a2a5e; }
+  .card[data-player="beckett"]  .sq { border-color: #d4a017; }
+  .card[data-player="katie"]    .sq { border-color: #0d9488; }
+
+  .card[data-player="benjamin"] .sq.done { background: #ffc72c; color: #1a2a5e; }
+  .card[data-player="beckett"]  .sq.done { background: #15307a; color: #fff; }
+  .card[data-player="katie"]    .sq.done { background: #ff2d8e; color: #fff; }
+
+  .sq.done::after {
+    content: "\2713";
+    position: absolute;
+    top: 2px;
+    right: 5px;
+    font-size: 0.8rem;
+    opacity: 0.85;
+  }
+
+  .reset {
+    display: block;
+    margin: 18px auto 0;
+    font-family: 'Baloo 2', sans-serif;
+    font-weight: 700;
+    font-size: 0.9rem;
+    padding: 12px 24px;
+    border-radius: 999px;
+    border: 2px solid #c9b89a;
+    background: #fff;
+    color: #8a7a5e;
+    cursor: pointer;
+  }
+  .reset:active { transform: scale(0.96); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Family Summer Bingo</h1>
+  <p>Tap a square when you finish it!</p>
+</header>
+
+<div class="tabs">
+  <button class="tab active" data-player="benjamin">Benjamin</button>
+  <button class="tab" data-player="beckett">Beckett</button>
+  <button class="tab" data-player="katie">Katie</button>
+</div>
+
+<div id="cards"></div>
+
+<script>
+  const cards = {
+    benjamin: {
+      name: "Benjamin",
+      squares: [
+        "Buy Elon Musk's new stock", "Read Lord of the Rings", "Sell my Groudon card", "Have friends over for fishing", "Go to BWs before end of appetizer deal",
+        "Do some AI work and get paid", "Go to Winona with friends", "Listen to the Iliad", "Learn to throw knives", "Swim across the lake",
+        "Lift weights 3 times a week", "Squigy art", "Family Vacation", "Go to movies with friends", "Make lifting program on ChatGPT and follow it",
+        "Set up a hammock", "Move Legos to attic", "Ordering stuff for new house", "Clean / organize Lego room", "Summer school",
+        "Hit a bullseye with bow and arrow", "Catch a big bass", "Eat ice cream at social", "High school XC", "Finish listening to the Inheritance series"
+      ]
+    },
+    beckett: {
+      name: "Beckett",
+      squares: [
+        "Find a book series", "Learn Typing", "5 (20-20-20)", "Make a food once a week", "Play with water balloons",
+        "Put things in my lego room desk", "Swim in the lake 10 times", "Sell 3 Pokemon cards", "Go kayaking", "Mini golf",
+        "Go to Winona and play Tennis", "Smores 5 times", "Family Vacation", "Have 10 contacts on new phone", "Have Teddy and John over on phone",
+        "Fish", "Play Cornhole", "Workout hopefully every day", "Rollerblade at skating rink", "Shotput (5 a day)",
+        "Go Bowling", "Do IXL Math (slopes)", "", "", "Go Golfing"
+      ]
+    },
+    katie: {
+      name: "Katie",
+      squares: [
+        "Michigan City", "Play a board game once a week", "Take the boat out on my own", "Rabers", "Plan Church for year",
+        "Deep clean Boys Bathroom", "Zoo", "Go to lunch 3 times w/ a friend", "Read Coffee Bean", "Start listening to BIBLE",
+        "Family Vacation", "Deep Clean Floors", "Learn to make bread", "Library Reading Challenge", "Talbots",
+        "Ride new bike w/ Max", "Pumpkin Trail", "Plan Christmas play", "Do a puzzle", "Walk 10,000 Steps a Day",
+        "Complete 3 Crafts", "Holland", "Do Something Special for Max's B-day", "Rank French Fries", ""
+      ]
+    }
+  };
+
+  const order = ["benjamin", "beckett", "katie"];
+  const STORAGE_KEY = "familySummerBingo_v1";
+  const cardsEl = document.getElementById("cards");
+  const state = load();
+
+  function load() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) return JSON.parse(raw);
+    } catch (e) {}
+    return { benjamin: {}, beckett: {}, katie: {} };
+  }
+  function save() {
+    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  order.forEach((key, i) => {
+    if (!state[key]) state[key] = {};
+    const c = cards[key];
+    const card = document.createElement("div");
+    card.className = "card" + (i === 0 ? " active" : "");
+    card.dataset.player = key;
+
+    const head = document.createElement("div");
+    head.className = "card-head";
+    head.innerHTML = '<h2>' + c.name + "'s Card</h2><div class=\"progress\" id=\"prog-" + key + '"></div>';
+    card.appendChild(head);
+
+    const grid = document.createElement("div");
+    grid.className = "grid";
+    c.squares.forEach((text, idx) => {
+      const sq = document.createElement("div");
+      sq.className = "sq";
+      sq.textContent = text || "Free Space";
+      if (!text) sq.style.fontStyle = "italic";
+      if (state[key][idx]) sq.classList.add("done");
+      sq.addEventListener("click", () => {
+        sq.classList.toggle("done");
+        state[key][idx] = sq.classList.contains("done");
+        save();
+        updateProgress(key);
+      });
+      grid.appendChild(sq);
+    });
+    card.appendChild(grid);
+
+    const reset = document.createElement("button");
+    reset.className = "reset";
+    reset.textContent = "Clear " + c.name + "'s card";
+    reset.addEventListener("click", () => {
+      if (!confirm("Clear all of " + c.name + "'s checkmarks?")) return;
+      grid.querySelectorAll(".sq.done").forEach(s => s.classList.remove("done"));
+      state[key] = {};
+      save();
+      updateProgress(key);
+    });
+    card.appendChild(reset);
+
+    cardsEl.appendChild(card);
+    updateProgress(key);
+  });
+
+  function updateProgress(key) {
+    const done = Object.values(state[key]).filter(Boolean).length;
+    document.getElementById("prog-" + key).textContent = done + " of 25 completed";
+  }
+
+  document.querySelectorAll(".tab").forEach(tab => {
+    tab.addEventListener("click", () => {
+      const p = tab.dataset.player;
+      document.querySelectorAll(".tab").forEach(t => t.classList.toggle("active", t === tab));
+      document.querySelectorAll(".card").forEach(c =>
+        c.classList.toggle("active", c.dataset.player === p));
+    });
+  });
+</script>
+</body>
+</html>
